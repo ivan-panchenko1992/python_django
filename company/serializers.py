@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Item
+from django.utils import timezone
+from .models import Item, Task
 from .validations.worker import validate_firstName, validate_secondName, validate_description, validate_position
 import re
 
@@ -33,4 +34,21 @@ class ItemUpdateSerializer(serializers.ModelSerializer):
 
     def validate_position(self, value):
         return validate_position(value)
+class TaskCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ['title', 'description', 'estimate', 'dueDate', 'createdBy', 'assigned']
+
+    def validate(self, data):
+        if data['estimate'] < 0:
+            raise serializers.ValidationError("Estimate must be a positive number")
+        if data['dueDate'] < timezone.now():
+            raise serializers.ValidationError("Due date must be in the future")
+        return data
+
+class TaskUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ['title', 'description', 'estimate', 'dueDate', 'assigned']
+        read_only_fields = ['createdBy']
 
